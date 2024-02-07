@@ -1,10 +1,3 @@
-# pinn intro workshop note
-benmoseley
-
-
-
-
-
 # Physics-Informed Machine Learning: A Survey on Problems, Methods and Applications
 2023
 
@@ -52,6 +45,7 @@ benmoseley
   - PINN：将$F, I, B$三函数做loss项，训练模型满足governing equation
     - 模型优化每一governing equation loss的速度不同
       - [每一governing loss term使用不同权重]
+        - Understanding and mitigating gradient flow pathologies in physics-informed neural networks
       - [resampling样本]
     - 提出新的loss func
       - novel Optimization Objectives：解决直接使用boundary condition做loss训练效果不好
@@ -142,7 +136,7 @@ benmoseley
         - deepONet输出$G(\theta)(x) = b_0 + \sum_{k=1}^p b_k(\theta)t_k(x)$
         - $b$称branch network，$t$称trunk network。$\theta$为parameter，x为coordinate
         - 两network输出p维向量，点乘后和bias$b_0$相加做模型输出
-        - 训练时直接使用ground truth $G(\theta)(x)$值 计算l2 loss训练模型
+        - 训练时直接使用ground truth $G(\theta)(x)$值 计算l2 loss训练模型，**loss中没有使用pde的residual项**
       - physics informed deepONet
         - 解决 原deepONet为data driven 但样本数据难以生成 问题
         - Long-time integration of parametric evolution equations with physics-informed deeponets 2021：physics informed deepONet的variant，进行long term dynamic system
@@ -232,3 +226,104 @@ cv中应用
     - Objectfolder 2.0: A multisensory object dataset for sim2real transfer 2022
   - Visual Newtonian Dynamics (VIND)：Newtonian scene understanding: Unfolding the dynamics of objects in static images 2016：Newtonian场景，使用游戏引擎生成
   - Physics 101: Learning physical object properties from unlabeled videos 2016：撞击场景下的物体运动视频数据集
+
+# Aug-NeRF: Training Stronger Neural Radiance Fields with Triple-Level Physically-Grounded Augmentations
+2022
+
+regularize nerf 模型和训练过程，减少outlier
+- 考虑相机位置预测中的noise，考虑输入图片中的noise
+- regularize使得学习的物体表面平滑
+- 没有使用物理公式
+
+
+# Physics-Driven Diffusion Models for Impact Sound Synthesis from Videos 
+2023
+
+场景音频生成，输入包含物理参数
+
+相关工作
+- 音频生成
+  - 手工方法：50：使用linear model生成rigid body音频
+  - 5：conditional gan生成音频
+  - 62：sampleRNN based method
+  - vision转乐器声音：1- 47 48
+
+模型
+- 1.使用signal processing得到物理parameter，使用nn预测residual parameter
+  - 使用音频样本，将音频样本分为D个damped oscillation，得到每一oscillation参数
+- 2.使用vision + 1.中输出，通过DDPM生成音频spectrogram
+
+# DeepONet：Learning nonlinear operators via deeponet based on the universal approximation theorem of operators
+2020
+
+提出deeponet的论文，学习的operator针对dynamic system (ode)和pde
+
+相关工作
+- operator针对dynamic system中的ode
+  - 22 33：使用nn学习可用difference equation描述的dynamic system
+  - 模拟一特定dynamic system的evolution
+    - 20：使用rnn + reservior computing
+    - 23：residual net
+    - 9：autoencoder
+    - 24：FNN
+    - 6：neural ordinary differential equation
+    - 12：neural jump stochastic differential equation
+
+
+
+# Long-time integration of parametric evolution equations with physics-informed deeponets 
+2021
+
+physics informed deepONet的variant，进行long term dynamic system
+- 在loss中添加由pde定义的residual项，deepOnet在$<\Delta t$时间步的样本上训练，在$>\Delta t$时间上eval
+- eval时 branch模型得到$\{u(t) | t \in [0, \Delta t)\}$，trunk模型得到$(x, t = \Delta t)$，模型输出作为$\Delta x$时刻$u(x)$和x加入$\{u(t) | t \in [0, \Delta t)\}$作为branch模型下一次预测输入
+- 即autoregressive预测
+
+
+# Unsupervised physics-informed disentanglement of multimodal data for high-throughput scientific discovery
+2022
+
+提出vae结构，发现signal中fingerprint。
+- 针对mnist数据集，分析embedding分布的论文
+
+# Residual-based attention in physics-informed neural networks
+2024 https://github.com/soanagno/rba-pinns
+
+不使用grad的pinn模型
+
+# NOMAD: Nonlinear Manifold Decoders for Operator Learning
+2022
+
+相关工作
+- 23：fourier neural operator，使用fourier transform theorem计算integral
+- 
+- 
+
+
+
+# Understanding and mitigating gradient flow pathologies in physics-informed neural networks
+2021
+
+# ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation
+
+# WHEN PHYSICS MEETS MACHINE LEARNING: A SURVEY OF PHYSICS-INFORMED MACHINE LEARNING
+
+# Explainable Machine Learning for Scientific Insights and Discoveries
+
+# Interpretable Intuitive Physics Model
+
+# Optimal control of PDEs using physics-informed neural networks
+
+# fem介绍 https://www.youtube.com/watch?v=yu35rKVvFWE&list=PLQVMpQ7G7XvHrdHLJgH8SeZQsiy2lQUcV&index=2
+
+# 搜索future frame prediction based on physics
+
+# Ben Moseley PhD thesis
+
+能否使用deeponet branch输出做hypernet参数 y值通过hypernet进行预测
+- 由于branch模型即预测一func参数，使得输出func为complex func可能可以预测更复杂问题
+
+能否使用branch net预测一func沿时间的转变，如nerf随时间变化即通过多次branch模型
+- branch模型本身为对一func进行操作的模型，并且能够generalize到不同basis func上，
+
+使用多个pde先学多个operator，合并和下游任务pde相关的branch模型 对下游任务学习 
