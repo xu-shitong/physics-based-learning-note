@@ -294,10 +294,15 @@ physics informed deepONet的variant，进行long term dynamic system
 # NOMAD: Nonlinear Manifold Decoders for Operator Learning
 2022
 
+使用non linear deeponet decoder
+- 即不同于deeponet使用branch trunk模型的输出点乘计算结果，而是将branch输出和每一yconcat通过mlp计算结果
+
 相关工作
 - 23：fourier neural operator，使用fourier transform theorem计算integral
-- 
-- 
+- 2：deeponet + pca based representation
+- 36：random feature approach + deeponet
+- 15：使用wavelet approximation to integral transform
+- 23：attention based + deeponet
 
 
 
