@@ -227,6 +227,129 @@ cv中应用
   - Visual Newtonian Dynamics (VIND)：Newtonian scene understanding: Unfolding the dynamics of objects in static images 2016：Newtonian场景，使用游戏引擎生成
   - Physics 101: Learning physical object properties from unlabeled videos 2016：撞击场景下的物体运动视频数据集
 
+# When Physics Meets Machine Learning: A Survey Of Physics-Informed Machine Learning
+2022
+
+motivation
+- 使用ml解物理domain task
+- 物理principle + ml针对real world task
+
+ml解物理task
+- simulation：simulation参数通过学习得到，不需要人工调参数
+  - 湍流预测
+    - Meshfreeflownet: a physics-constrained deep continuous space-time super-resolution framework 2020 SC20
+    - **Towards physics-informed deep learning for turbulent flow prediction** 2020 ACM SIGKDD
+    - Enforcing physical constraints in cnns through differentiable pde layer 2020 ICLR workshop
+  - particle system预测
+    - **Learning to simulate complex physics with graph networks** 2020 PMLR：particle system，可用于rigid和fluid和deformable物体
+    - **Learning particle dynamics for manipulating rigid bodies, deformable objects, and fluids** 2019 ICLR
+    - **Lagrangian fluid simulation with continuous convolutions** 2019 ICLR
+    - Learning mesh-based simulation with graph networks 2021 ICLR
+  - Combining differentiable pde solvers and graph neural networks for fluid flow prediction 2020 PMLR：fluid flow预测，效果好，并比ground truth快60倍
+    - 一gnn得到低维mesh，一cfd solver得到高维coarse mesh。cfd solver输出upsample到和gnn相同维度后concat
+- pde solver：
+  - Deep hidden physics models: Deep learning of nonlinear partial differential equations 2018
+    - 两模型。一模型作为solution prior 避免需要计算differentiation。一模型包含spatial temporal数据在时序上的变化信息
+  - 36 2003论文：multi scale analysis，得到低维microscopic信息，预测coarse macroscopic信息
+  - Datadriven solutions of nonlinear partial differential equations 2017：data driven pde solver
+  - **Neural operator: Graph kernel network for partial differential equations** 2020：使用spatial domain message passing模拟从initial condition到pde solution的mapping
+  - Fourier neural operator for parametric partial differential equations 2021 ICLR：同上一论文，使用frequency domain message passing
+- downsampling
+  - Downscaling satellite precipitation estimates with multiple linear regression, artificial neural networks, and spline interpolation techniques 2019：从卫星 precipitation 预测云层的optical 和 microphysical性
+  - Coarse-scale pdes from fine-scale observations via machine learning 2020 Chaos：从显微镜数据得到general level信息
+- parameterization：使用parameterized process替代dynamic systen，模拟复杂物理现象
+  - **Prognostic validation of a neural network unified physics parameterization** 2018：模拟一类似地球的水体行星的热源分布
+  - **Could machine learning break the convection parameterization deadlock**? 2018：模拟一水体行星上的对流
+- reduce order model ROM
+  - **A reduced order model for turbulent flows in the urban environment using machine learning** 2019：模拟城市楼房间的空气湍流
+  - A deep learning based approach to reduced order modeling for turbulent flow control using lstm neural networks 2018：使用LSTM进行湍流预测
+- causality
+  - **Causal network reconstruction from time series: From theoretical assumptions to practical estimation** 2018 Chaos：提出方法 1.区分direct和indirect causal，2.得到多个time series间共同的cause
+  - Detecting and quantifying causal associations in large nonlinear time series datasets 2019：non linear time series中的causal association
+  - **Causal discovery with attention-based convolutional neural networks** 2019 ：从time series进行causal discovery
+- **Counterfactual Analysis of Physical Dynamics观察不同intervension的影响**
+  - physics law intervension
+    - Interaction networks for learning about objects, relations and physics 2016 NIPS
+    - A compositional object-based approach to learning physical dynamics 2016
+    - Galileo: Perceiving physical object properties by integrating a physics engine with deep learning 2016 NIPS
+  - 将physics feature和其余feature 分离进行conterfactual analysis
+    - Decomposing motion and content for natural video sequence prediction 2017 ICLR 
+    - Unsupervised learning of disentangled representations from video 2017 NIPS
+  - Learning to generate long-term future via hierarchical prediction 2017 ICML：使用额外环境prior进行conterfactual analysis
+  - PhyDNet：Disentangling physical dynamics from unknown factors for unsupervised video prediction 2020 CVPR：将pde和额外信息分离
+  - Interpretable intuitive physics model 2018 ECCV：进行后续帧collision prediction，encoder预测摩擦力 质量，decoder得到encoder输出预测optic flow
+  - PIP：Pip: Physical interaction prediction via mental imagery with span selection 2021
+  - CWM：Causal discovery in physical systems from videos 2020 NIPS：无监督学latent confounding factor，得到intervension和后续帧间关系
+  - Counterfactual learning of physical dynamics 2020 ICLR：通过预测latent confounding factor预测后续帧
+  - Filteredcophy: Unsupervised learning of counterfactual physics in pixel space 2022 ICLR：不同帧取dense feature + key point + 每一key point feature作为输入/输出
+
+物理principle + ml解real world problem
+- 处理object centric data
+  - 处理sensor得到的位置速度信息
+    - Neural relational inference for interacting systems 2018 ICML
+    - **Spatial temporal graph convolutional networks for skeleton-based action recognition** 2018 AAAI
+  - 53：处理molecule data
+  - 使用GNN处理object centric data的sota
+    - Interaction networks for learning about objects, relations and physics 2016 NIPS
+    - Relational inductive biases, deep learning, and graph networks 2018
+    - Graph networks as learnable physics engines for inference and control 2018 ICML
+  - **Schnet: A continuous-filter convolutional neural network for modeling quantum interactions**. 2017 NIPS：计算total energy和分子间力，使得预测符合能量守恒
+  - **Hamiltonian neural networks** 2019 NIPS：预测n体问题，无监督学习，考虑Hamiltonian mechanics conservation law
+  - **Lagrangian Neural Networks** 118：不使用坐标系，parameterize任意Lagrangians
+- 处理time series
+  - **Disentangling physical dynamics from unknown factors for unsupervised video prediction** 2020 CVPR：将pde和未知factor disentangle，在latent space进行pde constraint prediction
+  - **Advectivenet: An eulerian-lagrangian fluidic reservoir for point cloud processing** 2020 ICLR：point cloud flow simulation
+  - Learning continuous-time pdes from sparse data with graph neural networks 2021 ICLR：提出continuous time differentiable model
+- 处理manifoid：当物体坐标系不在平面上时，使用物理公式对cnn提供坐标间临近关系
+  - Geodesic convolutional neural networks on riemannian manifolds 2015：cnn处理geodesic polar坐标系数据
+
+合并的物理信息
+- Newtonian mechanics
+- Lagrangian Mechanics
+  - lagrangian function：$L(q, \dot{q})$，q为generalized coordinate向量，$\dot{q}$为坐标q关于时间的求导
+    - 常用的L为动能和势能间的差值 $L(q, \dot{q}) = K(q, \dot{q}) - V(q)$
+    - 使用nn模拟lagrangian func
+  - "合理的physical trajectory为当$\delta \int_{t_1}^{t_2} L dt = 0$的trajectory"
+    - 从上式可得到 Euler-Lagrange equation：$\frac{d \Delta_{\dot{q}}L}{d t} = \Delta_q L$
+    - 从chain rule：$(\Delta_q \Delta_{\dot{q}}^T L) \ddot{q} + (\Delta_{\dot{q}} \Delta_{\dot{q}}^T L) \ddot{q} = \Delta_q L$
+    - $\ddot{q} = (\Delta_{\dot{q}} \Delta_{\dot{q}}^T L)^{-1} [\Delta_q L - (\Delta_q \Delta_{\dot{q}}^T L) \dot{q}]$
+- Hamiltonian Mechanics
+  - 令q为包含所有物体的spatial coordinate向量，p为所有物体的momentum向量，$\dot{q}, \dot{p}$为qp关于时间的求导
+    - qp应满足canonical condition：$p = \Delta_{\dot{p}} L$
+  - Hamiltonian func为(q, p)两向量的函数：$H(q, p) = \dot{q} \dot p - L$
+  - 从Euler-Lagrange equation + canonical condition + Hamiltonian func：$\dot{p} = - \Delta_q H$, $\dot{q} = \Delta_p H$
+  - 从上式：$\frac{d}{dt} H = \dot{q} \Delta_q H + \dot{p} \Delta_p H = 0$
+- symmetricity：针对输入数据的symmetry性质设计网络，多为gnn模型
+
+合并物理信息方法
+- transfer learning
+  - Training deep networks with synthetic data: Bridging the reality gap by domain randomization 2018 CVPR workshow：随机使用光线 pose 物体texture模拟场景，生成负样本。使得模型学正确场景的特征
+  - Physics-guided machine learning for scientific discovery: An application in simulating lake temperature profiles 2021：使用不精确的simulator生成数据预训练模型
+- multi-task/meta learning
+  - Adversarial multi-task learning enhanced physics-informed neural networks for solving partial differential equations 2021：使用随机参数生成pde，使用multitask learning学多个pde的shared representation
+  - Physics-aware spatiotemporal modules with auxiliary tasks for meta-learning 2021 IJCAI：spatialtemporal 预测模型，分离spatial和temporal模型。spatial 模型为pde independent，用MAML方式训练。temporal 模型为task dependent，对每一task单独训练
+- physics informed computation graph：将已有physics based solution中复杂的计算替换为nn
+  - DeLaN：Deep lagrangian networks: Using physics as model prior for deep learning 2019 ICLR：lagrange mechanics + DeLaN
+  - LNN：Lagrangian neural networks 2020 ICLR workshop：提出lagrangian neural network模拟任意lagrangian function
+  - HNN：Diffusion convolutional recurrent neural network: Datadriven traffic forecasting 2018 ICLR：hamiltonian function + nn
+- dl和physics based模型fusion
+  - Combining generative and discriminative models for hybrid inference 2019 NIPS：使用equation of motion得到gnn，autoregressive预测下一场景state
+  - **Hybridnet: integrating model-based and data-driven learning to predict evolution of dynamical systems** 2018 Conference on Robot Learning：使用convLSTM做data driven模型，预测系统得到的下一external input。cellular nn CeNN预测物理参数
+  - **Pde-net: Learning pdes from data** 2018 ICML：使用constrained comvolution kernel得到spatial derivative，通过后续层预测场景dynamics
+
+# Explainable Machine Learning for Scientific Insights and Discoveries
+
+
+- [直接预测物理现象，无法输出现象发生原因]
+  - PhysNet：39：预测一积木塔坍塌的trajectory
+- 预测物理现象参数/property
+  - A compositional object-based approach to learning physical dynamics 2017 ICLR
+  - **53**：判断视频中场景是否遵守给定物理公式
+  - 55：从视频中提取物理参数。
+    - 使用constrained least square method预测物体位置和朝向，constrain为conservation of momentum
+
+todo
+
 # Aug-NeRF: Training Stronger Neural Radiance Fields with Triple-Level Physically-Grounded Augmentations
 2022
 
@@ -253,7 +376,8 @@ regularize nerf 模型和训练过程，减少outlier
   - 使用音频样本，将音频样本分为D个damped oscillation，得到每一oscillation参数
 - 2.使用vision + 1.中输出，通过DDPM生成音频spectrogram
 
-# DeepONet：Learning nonlinear operators via deeponet based on the universal approximation theorem of operators
+# DeepONet
+## DeepONet：Learning nonlinear operators via deeponet based on the universal approximation theorem of operators
 2020
 
 提出deeponet的论文，学习的operator针对dynamic system (ode)和pde
@@ -269,9 +393,11 @@ regularize nerf 模型和训练过程，减少outlier
     - 6：neural ordinary differential equation
     - 12：neural jump stochastic differential equation
 
+## Learning the solution operator of parametric partial differential equations with physics-informed DeepOnets
 
+physics-informed DeepOnets论文
 
-# Long-time integration of parametric evolution equations with physics-informed deeponets 
+## Long-time integration of parametric evolution equations with physics-informed deeponets 
 2021
 
 physics informed deepONet的variant，进行long term dynamic system
@@ -304,24 +430,38 @@ physics informed deepONet的variant，进行long term dynamic system
 - 15：使用wavelet approximation to integral transform
 - 23：attention based + deeponet
 
+# DeepM&Mnet: Inferring the electroconvection multiphysics fields based on operator approximation by neural networks
+2020
 
+仅使用样本 不用pde做loss 训练多个deeponet。随后训练mlp模型预测deeponet输入，训练mlp时deeponet固定不参与训练
+- 共有$\phi, c^+, c^-, u, v$ 5变量，都为关于$(x, y)$的函数
+- 第一deeponet：branch模型得到$c^+, c^-$，trunk模型得到xy，预测$\phi(x, y)$
+- 其余4 deeponet都得到$\phi(x, y)$的值做branch模型输入，分别预测$c^+(x, y), c^-(x, y), u(x, y), v(x, y)$
+- 第二阶段训练的mlp得到$(x, y)$，预测$\phi(x, y), c^+(x, y), c^-(x, y), u(x, y), v(x, y)$值
 
-# Understanding and mitigating gradient flow pathologies in physics-informed neural networks
-2021
+# Optimal control of PDEs using physics-informed neural networks
+2022
+
+得到governing pde，求control variable最小化loss
+- control variable为pde或boundary condition中一参数
+- control variable作为可学习参数参与反向传播，和pinn同时从头开始训练
+
+定义
+- control variable 为$c_v(x, t), c_b(x, t), c_0(x)$
+- pde函数depend on control variable：
+  - 令x domain 为$\Omega \in R^d$
+  - $F(u(x, t), c_v(x, t)) = 0, x \in \Omega, t \in [0, T]$
+  - boundary condition $B(u(x, t), c_b(x, t)) = 0, x \in \delta\Omega, t \in [0, T]$
+  - initial condition $I(u(x, t), c_0(x)) = 0, x \in \Omega$
+- 用user define loss $J(u, c)$，gradient descent得到一满足pde的state value u和condition variable c
+
+模型
+- $u(x, t)$和三个$c(x, t)$都使用nn近似，即u为一pinn
+- 代价函数为u的PINN loss + J(u, c)，即u和c同时参与优化。J(u, c)项有loss weight，即pinn和control variable的nn有不同learning rate
 
 # ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation
 
-# WHEN PHYSICS MEETS MACHINE LEARNING: A SURVEY OF PHYSICS-INFORMED MACHINE LEARNING
-
-# Explainable Machine Learning for Scientific Insights and Discoveries
-
 # Interpretable Intuitive Physics Model
-
-# Optimal control of PDEs using physics-informed neural networks
-
-# fem介绍 https://www.youtube.com/watch?v=yu35rKVvFWE&list=PLQVMpQ7G7XvHrdHLJgH8SeZQsiy2lQUcV&index=2
-
-# 搜索future frame prediction based on physics
 
 # Ben Moseley PhD thesis
 
