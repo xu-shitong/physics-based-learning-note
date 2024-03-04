@@ -107,9 +107,122 @@ physics informed deepONet的variant，进行long term dynamic system
 - $u(x, t)$和三个$c(x, t)$都使用nn近似，即u为一pinn
 - 代价函数为u的PINN loss + J(u, c)，即u和c同时参与优化。J(u, c)项有loss weight，即pinn和control variable的nn有不同learning rate
 
-# ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation
+# Disentangling Physical Dynamics from Unknown Factors for Unsupervised Video Prediction
+2020
+
+提出PhyCell，进行video prediction。phycell抽卷积特征对图像xy轴坐标的求导，作为后续模型的输入
+- 将pde dynamics和未知complementary info分离，提出PhyCell 对latent space进行pde constrained prediction
+
+相关工作
+- 进行video prediction，不使用物理信息
+  - adversarial training
+    - 40 62 29
+  - stochastic model
+    - 7 41
+  - 用geometric信息进行constraint prediction
+    - 16 24 75
+  - disentangling factor for variation
+    - 60 58 12 21
+- data driven pde discovery
+  - "对可能的differential term使用sparse regression"
+    - [2016] **Discovering governing equations from data by sparse identification of nonlinear dynamical systems**
+    - [2017 science advances] Datadriven discovery of partial differential equations
+    - [2017 Royal society] **Learning partial differential equations via data discovery and sparse optimization**
+  - **使用nn近似pde解**
+    - [2018 journal of ML research] Deep hidden physics models: Deep learning of nonlinear partial differential equations
+      - Physics informed deep learning (part ii): Data-driven discovery of nonlinear partial differential equations
+    - [2019] Differentiable physics-informed graph networks
+  - 使用numerical pde解+nn预测dynamic system state
+    - [2015 EUSIPCO] Bilinear residual neural network for the identification and forecasting of geophysical dynamics
+    - [2019 Journal of Physics]  **Data driven governing equations approximation using deep neural networks**
+  - [2018 ICML] **PDE-Net: Learning PDEs from data**：用cnn近似partial derivative
+
+模型
+- 整体模型：
+  - ![](/note_images/phycell.png)
+  - rnn结构，一时间步中的预测包含并行的phycell和conv lstm
+- phycell
+  - ![](/note_images/phycell.png)
+  - phycell得到latent特征h，训练conv层输出$\frac{d^{i+j} h}{d x^i dy^j}$，做后续层输入 使得模型可对微分值进行计算
+    - 训练方式：将conv操作泰勒展开，loss项使得泰勒展开中微分项的系数为1
+
+# Causal Discovery in Physical Systems from Videos
+2020
+
+1.从多帧图像抽temporal consistent keypoint 2.inference model预测key point组成的graph distribution 3.decoder预测后续帧
+- cnn抽key point，gnn做inference model，每一node输出multivariate gaussian mean variance预测后续key point位移
+
+模型
+- 一样本m有$\{I_m^t\}$共T张图像
+- $f_{\theta}^V$得到每一帧图像$I_m$，输出每一图分别的key point $V_m^t = f_{\theta}^V(I_m^t)$
+- $f^{\epsilon}_{\phi}$得到样本所有key point，预测两两node间confounding factor特征$\epsilon_m = f^{\epsilon}_{\phi}(V_m^{1..T})$
+  - $\epsilon_m = \{(g_{m, ij}^c, g_{m, ij}^d) | \forall i, j \in node\}$
+  - 使用graph nn：Interaction Network IN实现
+- 后续帧key point state为$V_m^{T+1} = f_{phi}^D(V_m^{1..T}, \epsilon_m)$
+
+
+# Interaction Networks for Learning about Objects, Relations and Physics
+2016
+
+输入为graph，gnn预测每一node后续帧state。针对物理场景，即node state为物理性质
+
+模型
+- 定义
+  - graph中每一node有$o_i$为特征，两两node间关系为$(i, j, r_{ij})$，有外界对每一node作用$x_i$
+- relation model $f_R(o_i, o_j, r_{ij})$预测node $i$ 对$j$的影响$e_{ij}$
+- aggregation function 将一node j (得到的所有$e_{\dot j}$ + 外界作用$x_i$) 合并为$p_j$
+- object model得到每一node合并后的特征，预测下一时刻node的状态 $o_j'$
 
 # Interpretable Intuitive Physics Model
+2018
+
+bottleneck特征中有物理参数
+
+相关工作
+- 12：Inverse Graphic Network：训练使得graphic code layer的输出每一维度代表不同物理性质
+- future visual prediction
+  - 22：预测光流图
+  - 30：使用bilinear sampling，将optic flow的warping变为可导，使得模型能够end to end训练
+
+模型
+- cnn encoder得到多帧图像，输出有物理参数的特征向量
+  - 输出特征向量$z$分为4部分，4部分分别对应(质量$z_m$, 摩擦力$z_f$, 速度$z_v$, 物体颜色信息$z_c$)
+  - 对一batch样本，样本间仅更改一物理特性。如 一batch的样本为同样速度同样摩擦力的物体撞击，但每一样本的物体质量不同
+  - 有loss：对一batch内不同样本ij，令ij间更改的物理属性为a，则loss为$\sum_{b \neq a} \|z_b\|$。
+    - 即限定特征4部分中 仅$z_a$可不同，其余三项$z_b$应相同
+- cnn decoder预测光流图
+- 代价函数即reconstruct下一帧图像的loss + encoder输出向量
+
+
+# CoPhy: Counterfactual learning of Physical Dynamics 
+2020
+
+得到一物体移动视频，并指定修改一initial condition，预测修改initial condition后的视频
+
+模型
+- ![](/note_images/CoPhy.png)
+- A：给定物体移动视频的初始帧/initial condition，B：给定视频的后续帧
+- C：initial condition，D：模型预测的C的后续帧
+- 处理AB：
+  - GCN对每一时间步的场景分别encode：得到场景物体graph，优化每一node特征
+  - RNN对每一物体在不同场景的特征分别作为一序列进行encode：得到GCN对一物体不同时间步的特征，预测此物体的counfounding factor(即物理属性)
+    - 所有物体共用一rnn预测state，使得模型可对任意物体数量的场景进行inference
+    - 仅使用rnn的hidden state输出，忽略rnn对下一时间步的输出
+    - 最后一时刻的hidden state输出作为counfound factor输出
+- 处理CD：
+  - rnn输出的counfound factor和C中每一node特征concat，通过GCN + rnn + linear decode层预测下一时刻state
+    - 仍忽略rnn的输出，仅使用hidden state通过linear层预测state
+  - D中每一时刻每一node特征都和counfounding factor concat，通过GCN + rnn + linear decode预测state
+
+
+
+# Pde-net: Learning pdes from data
+2018
+
+
+
+
+# ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation
 
 # Ben Moseley PhD thesis
 
