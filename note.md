@@ -219,7 +219,49 @@ bottleneck特征中有物理参数
 # Pde-net: Learning pdes from data
 2018
 
+同PhyCell，将卷积计算泰勒展开，限制kernel值使得输出值为此卷积层输入关于第一层输入的求导，随后通过一kernel不受限的卷积。
 
+将以上两层卷积作为一block，模型包含多个block相连。每一block共享参数
+
+
+# hPINN：Physics-informed neural networks with hard constraints for inverse design
+2021
+
+提出将pde作为hard constrain加入inverse design，而不是作为loss 等soft constrain。
+- 由于如果将pde作为soft constrain，模型将在objective和pde constrain间作取舍，导致输出design不符合pde要求
+
+模型
+- ![](./note_images/hPINN.png)
+- **BC中method针对等式形式的boundary condition，penalty method和augmented Lagrangian method针对pde和$\leq, \geq$的boundary condition**
+- A：inverse design使用的PINN，$\gamma(x)$为inverse design求解的变量，如一物体结构
+  - design $\Gamma(x)$为可学习参数，参与优化。
+- hard constrain：更改模型结构，使得输出必定满足$u(x) = c$的boundary condition
+  - B：Dirichlet Boundary condition：即定义边界位置值为固定值
+    - 令$u$函数为pde求解，$u(x) = g(x), \forall x \in \Gamma_D$
+      - $\Gamma_D$为$u$整个boundary $\delta \Omega$中的一子集，即针对boundary $\delta \Omega$采样部分点取boundary值
+    - 模型结构：$u(x) = g(x) + l(x)N(x)$
+      - N(x)为模型输出。当$x \in \Gamma_D$时 $l(x) = 0$，否则 即当$x\in \Omega - \Gamma_D$时 $l(x) > 0$
+      - $l(x)$函数为手动设计
+  - C：peoridic boundary condition
+    - 当u关于$x$中$x_i$项periodic时，输入x向量为$[x_0, ..., sinusodal(x_i), ...]$
+    - 即 将$x_i$元素替换为$[cos(\frac{2\pi x_i}{P}), sin(\frac{2\pi x_i}{P}), cos(\frac{4\pi x_i}{P}), sin(\frac{4\pi x_i}{P}), ...]$
+- penalty method
+  - 将constrained optimization改为unconstrained optimization
+  - 令design的目标函数为$L_{objective}$，hard constrain (即pde) 为$F(u(x), \gamma(x)) = 0$，不等式constrain 为$h(x_i) \leq c_i$
+  - 则unconstrained optimization为最小化 $L = L_{objective} + \mu_f \sum_i \|F(u(x_i), \gamma(x))\|^2 + \mu_h \sum_j \max(h(x_j) - c_j, 0)^2$
+    - 对$h(x_j) - c_j$取$max(..., 0)$后再做平方，使得loss不对满足$h(x_i) \leq c_i$的项计算loss
+  - 每步更新$\mu_f^k = \beta_f \mu_f^{k-1}$，$\mu_u^k = \beta_u \mu_u^{k-1}$
+    - $\mu_f, \mu_u$随迭代次数增大而增大，当$\mu$足够大时 模型符合constrain
+    - $\mu_f^{k-1}, \mu_u^{k-1}$代表上一步$\mu_f, \mu_u$
+- Augmented Lagrangian method：另一encode hard constrain方法
+  - 使用Augmented Lagrangian method加快模型converge 并使得训练时无需将constrain的系数增加到极大值保证模型符合constrain
+  - constrained problem同penalty method中
+  - unconstrained optimization loss $L = L_{objective} + \mu_f \sum_i \|F(u(x_i), \gamma(x))\|^2 + \mu_h \sum_j \max(h(x_j) - c_j, 0)^2 + \lambda_f \sum_i F(u(x_i), \gamma(x)) + \lambda_h \sum_j (h(x_j) - c_j)$
+  - $\mu$更新同penalty method
+  - $\lambda_f^k = \lambda_f^{k-1} + 2 \mu_f^{k-1} F(u(x_i), \gamma(x))$
+    - $\lambda_h^k$更新同理
+
+？例子中采样在整个场景中都进行采样，如果采样点集中在一部分区域 模型效果是否显著下降
 
 
 # ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation
@@ -233,3 +275,11 @@ bottleneck特征中有物理参数
 - branch模型本身为对一func进行操作的模型，并且能够generalize到不同basis func上，
 
 使用多个pde先学多个operator，合并和下游任务pde相关的branch模型 对下游任务学习 
+
+场景中有多个透明物体，折射率不同，重建场景(折射率不确定的情况下重建场景)
+
+使用 hard constrain发现场景中不符合物理公式的部分
+- 如 3d重建中 轮流将透明/反射/直射光线颜色做hard constrain，当一constrain重建的objective loss过高时...
+
+场景中有多个物理公式影响，如反射折射 碰撞，同时学习
+- 如 3d重建中，物体碰撞时也有阴影产生

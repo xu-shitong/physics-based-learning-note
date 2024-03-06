@@ -93,9 +93,55 @@
 
 使用物体表面norm作模型输入，便于预测反射颜色
 
+# PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics
+2024 CVPR
 
+gaussian splatting + 物理公式模拟deform/移动
 
+相关工作
+- 将物理deformation公式加入nerf，将nerf学得的结构export为mesh进行后续模拟
+  - **19,29,48**
+- 使用explicite geometric representation进行forward modeling
+  - **5 20 43 46 47**
+  - **18**：使用物理simulator得到更"dynamic behaviour"
+- **material point method**：9：用于模拟多种物理现象的framework
 
+模型
+- gaussian splatting
+  - 每一gaussian p有[center位置$x_p$, opacity $\sigma_p$, covariance matrix $A_p$, spherical harmonic coefficient $C_p$]
+  - 一gaussian贡献的颜色为$C = \sum_k \alpha_p SH(d_k, C_k) \prod_{j=1}^{k-1}(1 - \alpha_j)$
+    - $\alpha_k$为k gaussian在视线交点位置的density和$\sigma_k$的乘积
+    - $d_k$为视线方向
+  - 优化：
+    - internal filling
+    - 由于当一物体deform为两个物体时，内部gaussian 将变为可见，创建gaussian splatting时应对物体内部同样创建gaussian避免出现物体内部空腔
+      - 判断一点p是否处在物体内部的条件
+        - 1.从一点向周围6方向(xyz轴正负方向)发射射线都和物体相交
+        - 2.从一点发射的任意射线都和物体仅相交奇数次
+        - 判断射线相交：观察射线路径上的density改变有没有高于阈值
+    - anisotropy regularizer
+      - 在较大deform时，较细的gaussian导致物体表面出现毛刺
+      - 解决：限制所有gaussian的长边和宽边比例不高于一阈值，否则loss升高
+- 动态gaussian splatting
+  - 模拟gaussian dynamics
+    - 假设每一gaussian p的deform后结果为 $x_p^t = \phi_p(x_p^0, t)$ $A_p^t = F_p^t A_p F_p^t$
+  - 由于SH为hard coded，通过旋转视线方向得到不同角度的SH，从而得到旋转后的SH取值
+  - incremental evolution of gaussian
+    - ？替代MPM和continuum mechanics 公式的方法
+  - continuum mechanics
+    - conservation of mass：$\int_{B_t} \rho(x, t) = \int_{B_0} \rho(\phi^{-1}(x, t), 0)$
+      - $\phi^{-1}(x, t)$得到 将t时刻x的位置warp回t=0时刻时x的位置
+      - $B_t, B_0$分别为t时刻和t=0时刻空间中一小块区域，有$\phi(B_0, t) = B_t$
+      - $\rho(x, t)$为t时刻在x位置的density
+      - 即 空间中一小块区域内 物体density在移动前后保持一致
+    - conservation of momentum
+      - $\rho(x, t)\dot{v}(x, t) = \nabla \dot \sigma(x, t) + f$
+      - f为外界施加的力，$\rho(x, t)$为density，$\dot{v}(x, t)$为加速度
+      - $\sigma = \frac{1}{det(F)} \frac{\partial \psi}{\partial F}(F^E){F^E}^T$
+        - 为关于hyperelastic energy density $\psi(F)$的cauchy stress ternsor
+      - 即 物体一位置的加速度 = -内部弹性势能增加的微分 + 外力
+  - material point method MPM
+    - ？如何和gaussian scene representation合并
 
 # Ref-Nerf
 
