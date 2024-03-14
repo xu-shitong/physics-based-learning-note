@@ -81,7 +81,7 @@
 重建反光的移动物体
 
 相关工作
-- 34：HyperNerf：使用hyper coordinate input模拟移动场景，而非使用物体template + 在随后帧的deform预测物体移动
+- [2021] **HyperNeRF**: A higherdimensional representation for topologically varying neural radiance fields：使用hyper coordinate input模拟移动场景，而非使用物体template + 在随后帧的deform预测物体移动 
 - 使用translation field 模拟位移/deform
   - 23 36 50
 - 使用special euclidean SE(3) field
@@ -100,10 +100,12 @@ gaussian splatting + 物理公式模拟deform/移动
 
 相关工作
 - 将物理deformation公式加入nerf，将nerf学得的结构export为mesh进行后续模拟
-  - **19,29,48**
+  - [2023] Neural impostor: Editing neural radiance fields with explicit shape manipulation
+  - [2022 NIPS] **Neuphysics**: Editable neural geometry and physics from monocular videos
+  - [2022 CVPR] Nerf-editing: geometry editing of neural radiance fields
 - 使用explicite geometric representation进行forward modeling
   - **5 20 43 46 47**
-  - **18**：使用物理simulator得到更"dynamic behaviour"
+  - PAC-neRF：使用物理simulator得到更"dynamic behaviour"
 - **material point method**：9：用于模拟多种物理现象的framework
 
 模型
@@ -143,8 +145,169 @@ gaussian splatting + 物理公式模拟deform/移动
   - material point method MPM
     - ？如何和gaussian scene representation合并
 
-# Ref-Nerf
+# VR-GS: A Physical Dynamics-Aware Interactive Gaussian Splatting System in Virtual Reality
+2024
 
+提出physics aware, vr gaussian splatting修改系统
+
+相关工作
+- 使用gaussian splatting + 物理公式 模拟deform
+  - PIE-NERF，Physgaussian
+
+模型
+- 1.生成gaussian splatting
+- 2.使用2d图像segmentation模型，对图像segment，每一gaussian kernel学自身对应的物体类别
+- 3.inpainting：由于和其他物体有接触，一物体gaussian splatting在接触面将产生洞
+  - 取一物体的gaussian splatting，使用2d inpainting生成接触面的图像
+  - 优化gaussian splatting使得接触面投影满足inpainting结果
+- 4.gaussian splatting生成mesh
+  - 每一gaussian中心做点云中的点，使用marching cube生成mesh
+- 使用mesh做模拟器输入，物理信息deform mesh。从mesh顶点坐标得到deform矩阵，对gaussian应用deform
+  - two level embedding procedure：保证一mesh内部的gaussian deform后仍被mesh完全包围，避免deform后物体表面出现毛刺
+
+# PIE-NeRF: Physics-based Interactive Elastodynamics with NeRF
+2023
+
+使用generalized moving least square模拟implicite model的deformation，使用meshless 方法模拟场景deform
+
+相关工作
+- meshless simulation
+  - 使用unstructured vertice替代预先定义的mesh
+    - 49：处理continuum mechanics
+    - 48：shape matching
+  - position based method：基于shape matching
+    - 45 47 66
+
+模型
+- 使用NGP encode坐标x，对场景使用NGP坐标训nerf
+- "将particle disperse进场景，得到类似点云的 对物体形状的proxy"
+- 使用Voronoi partition进行grouping，grouping中心作为classic lagrange mechanics中的q
+- 选择部分point作为integrator point IP，使用物理公式deform IP
+  - classic lagrange mechanics
+    - ？和phygaussian对应
+    - $\frac{d }{dt} (\frac{\partial L}{\partial \dot{q}}) - \frac{\partial L}{\partial q} = f$
+      - $L = T - U$ 为lagrangian，即kinetic energy - potential energy
+      - $q, \dot{q}$为位置坐标和速度向量，f为外界力
+- 使用IP位置的deform推测其余point的deform
+
+
+# PAC-Nerf: Physics Augmented Continuum Neural Radiance Field for GeometryAgnostic System Identification
+2023
+
+使用Eulerian grid表示nerf的density和颜色信息，使用Lagrangian particles模拟nerf中物体的的移动
+
+相关工作
+- 动态场景
+  - [2022 ACM MM] **Physics informed neural fields for smoke reconstruction with sparse data**：模拟烟尘，没有物体boundary 导致无法进行碰撞检测
+  - [2022 ICML] **Neurofluid**: Fluid dynamics grounding with particle-driven neural radiance fields：nerf + fluid dynamics
+- deformable 场景
+  - neural方法：
+    - [2019 ICLR]Learning particle dynamics for manipulating rigid bodies, deformable objects, and fluids
+    - [2019] Densephysnet: Learning dense physical object representations via multi-step dynamic interactions
+    - [PMLR 2020] Learning to simulate complex physics with graph networks
+  - gradient free method
+    - [ACM TOG 2019] Video-guided real-to-virtual parameter transfer for viscous fluids
+  - [differentiable physics simulation]
+  - [CVPR 2022] Virtual elastic objects：不同于differentiable physics simulation方法，不使用已知场景mesh进行预测
+
+模型
+- 将nerf的Eulerian view (grid view) G转为Lagrangian view (point view)P
+  - 令i代表grid node位置 p代表point位置
+  - $F^P_p$代表point p的density，$F^G_i$代表point i的density
+  - $F^P_p = \sum_i w_{ip} F^G_i$ $F^G_i = \frac{\sum_p w_{ip} F^P_p}{\sum_p w_{ip}}$ 
+    - $w_{ip}$为node i density对p位置contribution
+- 1.使用nerf重建场景，将nerf通过以上方法转为lagrangian view
+  - nerf使用一mlp + $160^3$维度voxel
+  - [CVPR 2022] Direct voxel grid optimization: Super-fast convergence for radiance fields reconstruction
+    - voxel + nerf进行重建，不处理dynamic场景
+    - 处理cloud effect：初始化voxel使得全部视角都为透明，随后对不可见的位置使用小learning rate，避免少样本区域出现cloud
+    - 提出post activation：先interpolate得到视线上一点的density ，随后计算softplus + alpha值，好于先计算alpha或softplus 后interpolate采样
+  - ？使用dynamic nerf重建后 是使用mpm模拟后续变换 还是mpm辅助重建后续变化并学习参数
+  - 数据预处理：使用segmentation模型移除背景
+- 2.转为lagrangian view
+  - 对每一voxel 采样8个点，作为point，计算每一点density $\sigma_p$
+  - 每一point计算scalaing factor $\alpha_p = 1 - e^{-softplus(\sigma_p)}$
+    - $\alpha_p$低于一阈值的point看做透明，移除
+    - 对$\alpha_p$较小的point，将physical density field值$\rho$和physical stress field $T$ scale by$\alpha_p^3$
+      - ？nerf预测的density和物理density如何转换
+  - 增加loss辅助重建效果：$L = \sum_p clamp(\alpha_p, 10^{-4}, 10^{-1})(\frac{\Delta x}{2})^2$
+    - 即减少重建物体的表面积
+    - ？对内部point使用此loss计算的是哪一方向的表面积
+- 使用material point method模拟后续变化，将变化后的point转回eulerian view用nerf进行渲染
+
+？如何定义物理公式输入信息
+？如何recover物理信息
+
+# Learning particle dynamics for manipulating rigid bodies, deformable objects, and fluids
+2018
+
+提出可微分的particle based simulator，可用于模拟fluid/rigid 物体
+- 使用gnn，每一particle做node进行后续particle状态预测
+- hierarchical modeling for long-range dependence：
+  - 模拟长sequence的graph state需要每一node特征通过rnn进行下一时间步的状态预测，node数量过多，计算量过大
+  - 解决：对每一物体，创建一global node和所有物体内particle node相连，通过rnn计算后一时间步信息时仅使用global node特征进行计算
+- ？每一物体内particle都创建node，数量是否过大，如何定义哪些位置创建particle
+
+[相关工作]
+
+# PhysNerf：Neurofluid: Fluid dynamics grounding with particle-driven neural radiance fields：nerf + fluid dynamics
+2022
+
+一transition模型预测particle 下一时刻state，另一nerf模型得到particle state生成图像，生成的图像和gt图像计算loss优化两模型
+- 无需对particle state transition模型使用gt训练，从图像信息训练transition模型预测后续particle state
+- 第一帧particle state已知
+- 由于使用两模型同时训练，需避免模型collapse：在第一帧得到不同视角图像，预训练nerf模型。后续帧中nerf模型同样参与训练
+
+# NEMTO: Neural Environment Matting for Novel View and Relighting Synthesis of Transparent Objects
+2023
+
+处理透明物体relighting，能够对geometry精确度不高的物体进行relighting
+
+相关工作
+- environment matting：？从一透明物体得到光线在场景中的reflection/refraction传播路径
+  - [2000] 8 
+  - [1999] 44
+  - [2018] 7："使用refractive flow field模型表示environment matting"
+  - [2002]33：重建物体的背景可为任意场景，但模型需要场景中有structured background light
+- 透明物体重建
+  - 21：假设物体indices of refraction值和场景光照已知，使用同一模型重建不同物体结构
+  - 2：不假设得到物体IOR，但只能重建简单结构的物体，如一球体
+
+模型
+- ![](./note_images/NEMTO.png)
+- SDF模拟物体geometry
+- neural environment matting：mlp得到[视线方向, 视线和物体交点, 交点处法线方向]，直接预测1.通过物体内部refraction后离开物体的视线方向 2.交点处的IOR
+  - 训练mlp：使得预测方向 和 物理公式计算的refraction方向 一致
+
+展示的图像效果好于nerf Physg 
+
+（skip，物理模拟部分仅为neural environment matting中的mlp）
+
+# Physics Informed Neural Fields for Smoke Reconstruction with Sparse Data
+2022
+
+模型将静止的固体和移动的烟雾分开重建。用layer-by-layer growing strategy依次训练模型每一层
+
+[相关工作]
+
+模型
+- 两nerf分别预测density color和point velocity
+  - $f_{i}(x, y, z, t) \to (c, \sigma)$, $f_{v}(x, y, z, t) \to u$
+  - 假设烟雾粒子为漫反射，$f_i$模型不得到视线方向做输入
+  - 使用vgg模型对render后的图像抽特征，使得特征和实际图像特征相同
+- 代价函数
+  - 1.使用物理公式限制输出
+    - transport equation：
+    - Navier-Stokes equation：
+    - 避免上两公式导致模型仅预测$\frac{d \sigma}{d t} = 0$：使用$f_v$模型预测的v将一时刻density warp回最初时刻，warp得到的模型输称$I'$
+    - ？是否不使用f_i预测的density了，如何使用I'
+  - 2.训练gan得到一3d density grid，输出3d velocity grid
+    - gan作为额外guidance，模型预测的velocity应和gan输出保持一致
+  - 3.Tackling Color-Density Ambiguity
+    - 模型不优化density，而是将背景对应位置设为一颜色
+    - 用layer-by-layer growing strategy解决
+      - ？layer-by-layer growing strategy
+  - 先对静止固体训练一nerf，输出图像和烟尘输出图像overlay，和gt图像计算loss
 
 # 3D Reconstruction of Transparent Objects with Position-Normal Consistency
 2016

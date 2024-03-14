@@ -107,7 +107,7 @@ physics informed deepONet的variant，进行long term dynamic system
 - $u(x, t)$和三个$c(x, t)$都使用nn近似，即u为一pinn
 - 代价函数为u的PINN loss + J(u, c)，即u和c同时参与优化。J(u, c)项有loss weight，即pinn和control variable的nn有不同learning rate
 
-# Disentangling Physical Dynamics from Unknown Factors for Unsupervised Video Prediction
+# PhyDNet: Disentangling Physical Dynamics from Unknown Factors for Unsupervised Video Prediction
 2020
 
 提出PhyCell，进行video prediction。phycell抽卷积特征对图像xy轴坐标的求导，作为后续模型的输入
