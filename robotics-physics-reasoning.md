@@ -75,3 +75,65 @@ vlm + physics进行robot planning，"通过视觉实现reasoning"
     - VEC 21：用vlm/llm进行physical reasoning，reasoning部分通过文本
   - openscene 14：使用clip检测物体物理属性
 
+模型训练
+- 模型输入一图片和一文本，文本提问图片物体的物理属性，模型输出属性
+- 人工label对一文本和一对图片，标注哪一图片被提问的物理属性更高。训练模型输出的物理属性排序符合人工标注
+- 自动标注：
+  - 对categorical物理属性，固定将一类别物体对应一物理属性category
+  - 对continuous物理属性，看做此物理属性仅有high/low两类，固定将一类别物体对应high/low中一类
+
+# Mind’s eye: Grounded language model reasoning through simulation
+2023
+
+将提问转为simulation code，传入physics engine，得到的输出做prompt进行inference
+
+# VEC：Can language models understand physical concepts?
+2023
+
+提出分析vlm理解物理性质的task
+- 文本提问图片中物体的颜色 材质等信息，取gt词的prob做模型预测
+- 文本提问图中两物体的比较，如质量 温度 硬度等。分别对3物理属性提出有标号数据集
+
+# Dynamic visual reasoning by learning differentiable physics models from video and language
+2021
+
+提出Visual Reasoning with Differentiable Physics VRDP：同时学一物体physics model和物体间交互
+
+相关工作
+- physical model：
+  - video prediction
+    - PhyNet及后续工作
+      - [2016 NIPS] Unsupervised learning for physical interaction through video prediction
+      - [2016 ICML] Learning physical intuition of block towers by example
+      - [2018 ECCV] Interpretable intuitive physics model
+      - [2019 ICCV] Compositional video prediction
+  - simulation rendering
+    - [2019 ICLR] Propagation networks for modelbased control under partial observation
+  - dynamic reasoning
+    - [2016] Interaction networks for learning about objects, relations and physics
+    - [2017 NIPS] Visual interaction networks: Learning a physics simulator from video
+  - 预测力对物体的影响
+    - [2016 NIPS] Learning to poke by poking: Experiential learning of intuitive physics
+    - [2020 ICLR] Contrastive learning of structured world models
+    - [2016 ECCV] “what happens if...” learning to predict the effect of forces in images
+- physical scene understanding
+  - [2019 NIPS] Phyre: A new benchmark for physical reasoning：仅从视频学习physical understanding reasoning
+  - 将场景deconstruct，从motion预测物理性质
+    - [2017 NIPS] Learning to see physics via visual de-animation
+    - [2020 NIPS] Learning physical graph representations from visual scene
+
+模型
+- visual perception module：对视频每一帧图像 抽物体移动轨迹特征
+  - 使用fast RCNN，对T帧的视频抽$N \times (D + 4T)$维度的特征
+    - N为物体个数
+    - 每一物体有D维RoI pooling特征，有4T维度特征代表每一帧物体在图像中位置，即每一帧中物体所在位置用4维向量表示 称trajectory特征
+      - **4维特征包含 [物体锚框坐标, 物体在BEV下的xy坐标]，使得模型无需限定输入视频为BEV视角视频**
+  - 对两两物体 抽$T \times N \times N \times 12S$特征$f_{pair}$
+    - $f_{pair}(t, i, j)$代表t帧ij物体间关系 为12S维度向量。12S维度包含[前后S/2帧中ij分别的trajectory特征, 前后S帧中ij trajectory特征的差值]
+    - 差值用于记录ij物体间距
+- concept learner：
+  - 得到nlp指令，输出program对物理模拟结果提问
+- physics engine：可微分，预测physics特征值，如mass值
+  - 每一步预测下一时间步场景状态，得到concept learner输出的program指定的物理变量，做整个模型最终输出
+- 三部分都可微分，concept learner输出program执行过程也可微分
+  - **使得执行program 物理engine 可微分，进行end-to-end训练**
