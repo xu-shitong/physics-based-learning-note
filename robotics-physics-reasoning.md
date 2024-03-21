@@ -117,7 +117,8 @@ vlm + physics进行robot planning，"通过视觉实现reasoning"
     - [2020 ICLR] Contrastive learning of structured world models
     - [2016 ECCV] “what happens if...” learning to predict the effect of forces in images
 - physical scene understanding
-  - [2019 NIPS] Phyre: A new benchmark for physical reasoning：仅从视频学习physical understanding reasoning
+  - [2019 NIPS] Phyre: A new benchmark for physical reasoning：仅从图像学习physical understanding reasoning
+    - 人工定义每一张图的reward，训reinforce模型 使用物理知识 输出action影响场景达到目标状态
   - 将场景deconstruct，从motion预测物理性质
     - [2017 NIPS] Learning to see physics via visual de-animation
     - [2020 NIPS] Learning physical graph representations from visual scene
@@ -137,3 +138,37 @@ vlm + physics进行robot planning，"通过视觉实现reasoning"
   - 每一步预测下一时间步场景状态，得到concept learner输出的program指定的物理变量，做整个模型最终输出
 - 三部分都可微分，concept learner输出program执行过程也可微分
   - **使得执行program 物理engine 可微分，进行end-to-end训练**
+
+？todo：concept learner physics engine如何使用视觉信息，如何将普通视角转为bev，如何end to end训练
+
+# Phyre: A new benchmark for physical reasoning
+2019
+
+提出phyre数据集
+- 场景考虑的物理信息仅包含 重力 撞击 摩擦
+- 训练模型使得对不同task generalize + 使得模型使用物理信息解决问题
+- 不需要nlp理解任务
+
+相关工作
+- 39 41：判断一复杂场景是否物理playsable
+- 使用feedforward模型进行pixelwise预测后续状态
+  - 11 24 34 60
+- 使用feedforward模型qualitative预测后续状态
+  - 12 26 27 34 61
+
+模型
+- 模型得到一图像，输出为action 为在场景中放置一个或多个可移动物体，使得场景中指定两物体被放置的物体撞击后接触
+- 输入为图像，每一物体颜色分别代表物体 是否能够被移动/是否为指定应接触的物体 等类别
+- 模型输出action，为放置的物体的位置
+
+训练
+- train：模型得到 训练图像，使用物理simulator得到action后的结果
+- test：模型重复：选择action，得到 binary结果代表是否成功 + simulator中间时间步图像，优化后重新选择action
+  - eval时根据attempt次数比较模型
+
+# Learning to See Physics via Visual De-animation
+2017
+
+得到图像，使用目标检测模型对每一物体预测物理属性(质量 形状 摩擦力 坐标 pose)，输入物理engine + renderer预测后续帧图像
+- physics engine和renderer 可微分，直接对预测的后续图像计算loss end-to-end 训练
+

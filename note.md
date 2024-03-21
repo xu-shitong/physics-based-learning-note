@@ -160,6 +160,10 @@ physics informed deepONet的variant，进行long term dynamic system
   - 使用graph nn：Interaction Network IN实现
 - 后续帧key point state为$V_m^{T+1} = f_{phi}^D(V_m^{1..T}, \epsilon_m)$
 
+任务
+- 1.多个球体间有未知interaction，如弹簧连接/rigid固体连接/无连接，预测给定视频后续帧
+- 2.预测衣物上的point的deform
+
 
 # Interaction Networks for Learning about Objects, Relations and Physics
 2016
@@ -170,7 +174,7 @@ physics informed deepONet的variant，进行long term dynamic system
 - 定义
   - graph中每一node有$o_i$为特征，两两node间关系为$(i, j, r_{ij})$，有外界对每一node作用$x_i$
 - relation model $f_R(o_i, o_j, r_{ij})$预测node $i$ 对$j$的影响$e_{ij}$
-- aggregation function 将一node j (得到的所有$e_{\dot j}$ + 外界作用$x_i$) 合并为$p_j$
+- aggregation function 将一node j (得到的所有$e_{\sdot j}$ + 外界作用$x_i$) 合并为$p_j$
 - object model得到每一node合并后的特征，预测下一时刻node的状态 $o_j'$
 
 # Interpretable Intuitive Physics Model
@@ -235,7 +239,7 @@ bottleneck特征中有物理参数
 - **BC中method针对等式形式的boundary condition，penalty method和augmented Lagrangian method针对pde和$\leq, \geq$的boundary condition**
 - A：inverse design使用的PINN，$\gamma(x)$为inverse design求解的变量，如一物体结构
   - design $\Gamma(x)$为可学习参数，参与优化。
-- hard constrain：更改模型结构，使得输出必定满足$u(x) = c$的boundary condition
+- hard constrain：更改模型结构，使得输出必定满足$u(x) = c$的**boundary condition**
   - B：Dirichlet Boundary condition：即定义边界位置值为固定值
     - 令$u$函数为pde求解，$u(x) = g(x), \forall x \in \Gamma_D$
       - $\Gamma_D$为$u$整个boundary $\delta \Omega$中的一子集，即针对boundary $\delta \Omega$采样部分点取boundary值
@@ -245,7 +249,7 @@ bottleneck特征中有物理参数
   - C：peoridic boundary condition
     - 当u关于$x$中$x_i$项periodic时，输入x向量为$[x_0, ..., sinusodal(x_i), ...]$
     - 即 将$x_i$元素替换为$[cos(\frac{2\pi x_i}{P}), sin(\frac{2\pi x_i}{P}), cos(\frac{4\pi x_i}{P}), sin(\frac{4\pi x_i}{P}), ...]$
-- penalty method
+- penalty method：**针对pde constrain**
   - 将constrained optimization改为unconstrained optimization
   - 令design的目标函数为$L_{objective}$，hard constrain (即pde) 为$F(u(x), \gamma(x)) = 0$，不等式constrain 为$h(x_i) \leq c_i$
   - 则unconstrained optimization为最小化 $L = L_{objective} + \mu_f \sum_i \|F(u(x_i), \gamma(x))\|^2 + \mu_h \sum_j \max(h(x_j) - c_j, 0)^2$
@@ -253,7 +257,7 @@ bottleneck特征中有物理参数
   - 每步更新$\mu_f^k = \beta_f \mu_f^{k-1}$，$\mu_u^k = \beta_u \mu_u^{k-1}$
     - $\mu_f, \mu_u$随迭代次数增大而增大，当$\mu$足够大时 模型符合constrain
     - $\mu_f^{k-1}, \mu_u^{k-1}$代表上一步$\mu_f, \mu_u$
-- Augmented Lagrangian method：另一encode hard constrain方法
+- Augmented Lagrangian method：**针对pde constrain**另一encode hard constrain方法
   - 使用Augmented Lagrangian method加快模型converge 并使得训练时无需将constrain的系数增加到极大值保证模型符合constrain
   - constrained problem同penalty method中
   - unconstrained optimization loss $L = L_{objective} + \mu_f \sum_i \|F(u(x_i), \gamma(x))\|^2 + \mu_h \sum_j \max(h(x_j) - c_j, 0)^2 + \lambda_f \sum_i F(u(x_i), \gamma(x)) + \lambda_h \sum_j (h(x_j) - c_j)$
@@ -262,6 +266,87 @@ bottleneck特征中有物理参数
     - $\lambda_h^k$更新同理
 
 ？例子中采样在整个场景中都进行采样，如果采样点集中在一部分区域 模型效果是否显著下降
+
+# Lagrangian Neural Network
+2020
+
+模型输入可不为canonical坐标，而是如角度等人为定义的值
+- 人工求解时 相比于使用坐标系表示 物体位置/速度，使用euler-lagrangian func更简单
+
+相关工作
+- 设计模型使得模型可学习任意conservation law
+  - Hamiltonian Neural Networks
+  - Hamiltonian Generative Networks 
+
+euler-lagrangian function
+- lagrangian量定义：L = 动能 - 势能
+  - 常写为$L = T - V = T(q, \dot{q}) - V(q)$
+- euler-lagrangian function：$\frac{d }{d t}(\frac{\partial L}{\partial \dot{q}}) - \frac{\partial L}{\partial x} = 0$
+  - 物体移动跟随路径 ？使得路径上所有点的euler-lagrangian func值都为0
+
+模型预测lagrangian值L，使用euler-lagrangian计算$\ddot{q}$，label为gt $\ddot{q}$，使用L2代价函数训练模型
+- 模型输入为$[q, \dot{q}]$
+- 模型不能使用relu，由于求二阶导hessian后relu导致grad为0。模型最终使用softplus
+
+# Latent-space Dynamics for Reduced Deformable Simulation
+2019
+
+已知物体mesh，通过autoencoder抽特征，对特征deform
+- mass matrix已知，即每一mesh node上mass值已知
+
+模型
+- 输入为所有n个mesh node的位移$u \in R^{3n}$，使用mlp得到$z = \Phi(u) \in R^r$
+  - autoencoder方式训练，即 使得$\Phi_{decoder}(\Phi_{encoder}(u)) = u$
+  - 模型使用预处理，通过mlp前使用PCA将u降维 得到basis $U$，即$\Phi_{encoder}(u) = mlp(U^Tu), u = U\Phi_{decoder}(z)$
+
+使用Newton’s second law
+- $M\ddot{u} = f_{int}(u) +f_{ext}$
+  - 每一node加速度 = node internal elastic potential改变 + 外力
+- 直接使用autoencoder抽得特征带入newton second law导致simulation需要计算acceleration $\ddot{u}$进行物体位移模拟
+
+使用Euclidean space timestepping得到后续时间步位移$u_{t+1}$
+- $u_{n+1} = argmin_u \frac{1}{2h^2} (u − u_n - \dot{u}_nh)^TM(u − u_n - \dot{u}_nh) + V(u)$
+  - V(u)包含 外力 + elastic potential 导致的internal force
+- 将u替换为z：
+  - $z_{n+1} = argmin_z \frac{1}{2h^2} (\Phi_{decoder}(z) − \dot{u}_n - \ddot{u}_nh)^TM(\Phi_{decoder}(z) − \dot{u}_n - \ddot{u}_nh) + V(\Phi_{decoder}(z))$
+  - $\dot{u}$使用$u_n - u_{n-1}$计算
+- forward simulation即求每一步$z_n$，通过decoder得到$u_n$
+  - 可通过反向传播得到$z_n$，论文提供加速求$z_n$的方式
+
+# Enhancing multi-physics modelling with deep learning: Predicting permeability through structural discontinuities
+2022
+
+multi physics modeling中将一模态的physics modeling替换为dl进行预测，用dl输出+另一模态物理engine输出得到最终预测
+- dl预测一缝隙中流体流出的速度分布
+
+navier-stroke equation
+- 用于描述所有流体
+- $\nabla \sdot u = 0$
+  - u为velocity vector field，看做关于位置xyz的函数u(x, y, z)
+  - **此constrain限制divergence = 0，非对u求导=0**，代表任意一点的物质不会突然消失或出现。对实际流体有效，当流体为磁场或电场时无效
+    - 例：当一点的divergence不为0，表明进入此点的质量和离开此点的质量不同，物质凭空产生或消失。但磁场的磁极可以看做divergence为负的点
+- $\rho \frac{d u}{d t} = -\nabla p + \mu \nabla^2 u + F$
+  - $\rho$为物体在一点的density，$\frac{d u}{d t}$为此点加速度
+  - $-\nabla p$为pressure field 在一点的gradient
+  - $\mu \nabla^2 u$对应流体内部的摩擦力(?粘滞力)，修改此项使得公式对非牛顿流体同样有效
+  - F为物体受到的外力，由于通常流体仅受到重力影响，F常写为$\rho g$
+
+function operator
+- grad：$\nabla$：关于位置求导
+  - 此function operator输入为$R^n \to R$形式函数，输出$R^n \to R^n$ vector field。n即位置维度
+  - 即输入scalar field，输出vector field
+  - 另一写法：$[\frac{d}{dx}, \frac{d}{dy}, \frac{d}{dz}]^T f = [\frac{df}{dx}, \frac{df}{dy}, \frac{df}{dz}]^T$
+- divergence：$\nabla \sdot$
+  - 输入vector field，输出scalar field
+  - $\nabla \sdot f = [\frac{d}{dx}, \frac{d}{dy}, \frac{d}{dz}] [f_x, f_y, f_z]^T = \frac{df_x}{dx} + \frac{df_y}{dy} + \frac{df_z}{dz}$
+  - 计算一点总共的流入流出向量
+- curl：$\nabla \times$
+  - 输入vector field，输出vector field
+  - $\nabla \times f = [\frac{d}{dx}, \frac{d}{dy}, \frac{d}{dz}] \times [f_x, f_y, f_z]$
+    - $= [\frac{df_z}{dy} - \frac{d f_y}{d_z}, \frac{df_x}{dz} - \frac{d f_z}{d_x}, \frac{df_y}{dx} - \frac{d f_x}{d_y}]^T$
+  - 计算一点周围旋转向量
+
+# Label-free supervision of neural networks with physics and domain knowledge
 
 
 # ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation

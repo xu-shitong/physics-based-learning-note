@@ -344,8 +344,17 @@ ml解物理task
   - PhysNet：39：预测一积木塔坍塌的trajectory
 - 预测物理现象参数/property
   - A compositional object-based approach to learning physical dynamics 2017 ICLR
-  - **53**：判断视频中场景是否遵守给定物理公式
-  - 55：从视频中提取物理参数。
+  - [2017] **Label-free supervision of neural networks with physics and domain knowledge**：判断视频中场景是否遵守给定物理公式
+  - [2016 ACM Trans Graph] **SMASH**: Physics-guided reconstruction of collisions from videos：从视频中提取物理参数
     - 使用constrained least square method预测物体位置和朝向，constrain为conservation of momentum
-
-todo
+  - [2016 CVPR] **Newtonian image understanding**: Unfolding the dynamics of objects in static images：Newtonian NN：得到单张rgb，将场景分类进预先定义的12种newtonian 场景，预测物体后续移动
+    - ？单张图片如何定义移动，或仅考虑重力
+- 解释physics outcome的dl模型
+  - 使用attention heatmap可视化多个木块是否能够累加
+    - [2016] Learning physical intuition of block towers by example
+    - [2017] **Shapestacks**: Learning vision-based physical intuition for generalised object stacking
+- embedding feature selection：得到一尽可能简单的模型 解释一物理现象(即accuracy达到一阈值)
+  - 85 89
+  - [2018] A regression approach for explaining manifold embedding coordinates：从unsupervised预训练embedding抽domain specific meaningful特征
+- [2018] Discovering physical concepts with neural networks：vae从实验结果抽特征，从特征得到physical concept
+- [2018 ICLR] **Detecting statistical interactions from neural network weights**：提出neural interaction detection

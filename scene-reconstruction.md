@@ -5,9 +5,9 @@
 
 相关工作
 - nerf + reflectance
-  - 37：Ref-Nerf：使用物体表面norm
-  - 18：ENVIDR：使用物体材质信息重建有光滑表面的物体，但导致物体表面细节缺失
-  - 44：BakedSDF：使用模型类似Ref-Nerf模型 + VolSDF模型，重建光滑物体表面，但导致物体表面细节缺失
+  - [2022 CVPR]Ref-NeRF: Structured view-dependent appearance for neural radiance fields：使用物体表面norm
+  - [2023] ENVIDR: Implicit differentiable renderer with neural environment lighting：使用物体材质信息重建有光滑表面的物体，但导致物体表面细节缺失
+  - [2023] BakedSDF: Meshing neural sdfs for real-time view synthesis：使用模型类似Ref-Nerf模型 + VolSDF模型，重建光滑物体表面，但导致物体表面细节缺失
     - 43：VolSDF
 
 模型
@@ -309,7 +309,60 @@ gaussian splatting + 物理公式模拟deform/移动
       - ？layer-by-layer growing strategy
   - 先对静止固体训练一nerf，输出图像和烟尘输出图像overlay，和gt图像计算loss
 
+# Virtual Elastic Objects
+2022
+
+重建一物体 + deformation field，使用可微分particle based simulator预测不同情况下的deformation
+- meshless simulation
+- 使用透明鱼线/气流吹物体进行deform，测试即使用不同鱼线/气流config
+
+相关工作
+- 44：直接从数据学physics law，不使用任何prior
+- [2019] Latent-space dynamics for reduced deformable simulation：使用autoencoder学elastic deform的subspace特征
+- 16：预测衣物的deform
+- "fit parameterized material model to observed deformation"
+  - 20，47：已经在biomedical system中应用
+  - 6：预测一物体在无重力情况下的后续pose
+  - 17，18：设计soft robot
+  - 7，12：在有摩擦的表面进行motion planning
+- meshless simulation
+  - [2004] 34，[2005] 41：针对melting/碎裂场景
+  - 14 30 33：支持oriented particle的meshless simulation
+
+模型
+- 使用NR-Nerf学场景 + deform
+  - 学一mlp，得到(坐标x, t时刻图像特征$I_t$)，输出$b(x, I_t)$ 将x warp至t=0时刻的坐标$x_0$，从nerf得到$x_0$颜色
+- 从nerf抽点云
+  - opacity高于一阈值的点做物体point
+- 使用可微分physics engine学两物理参数
+  - 对物体的作用力 为已知值输入模型
+- 使用学习得到的物理参数 对新的作用力config预测deform
+
+# Video-guided real-to-virtual parameter transfer for viscous fluids
+2019
+
+从视频得到流体的物理参数，即进行inverse problem
+
+# Latent-space dynamics for reduced deformable simulation
+2019
+
+
+# Augmented Incremental Potential Contact for Sticky Interactions
+2023
+
+模拟弹性物体间的粘粘
+
+相关工作
+- [模拟物体粘连]
+- [barier based contact]
+
+Incremental Potential Contact (IPC)
+- （todo）
+
 # 3D Reconstruction of Transparent Objects with Position-Normal Consistency
 2016
 
 假设refraction 光路仅两条
+
+
+得到一人跑动视频，更改土地为沙地，生成视频符合修改
