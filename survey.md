@@ -343,7 +343,7 @@ ml解物理task
 - [直接预测物理现象，无法输出现象发生原因]
   - PhysNet：39：预测一积木塔坍塌的trajectory
 - 预测物理现象参数/property
-  - A compositional object-based approach to learning physical dynamics 2017 ICLR
+  - **A compositional object-based approach to learning physical dynamics** 2017 ICLR
   - [2017] **Label-free supervision of neural networks with physics and domain knowledge**：判断视频中场景是否遵守给定物理公式
   - [2016 ACM Trans Graph] **SMASH**: Physics-guided reconstruction of collisions from videos：从视频中提取物理参数
     - 使用constrained least square method预测物体位置和朝向，constrain为conservation of momentum
@@ -354,7 +354,8 @@ ml解物理task
     - [2016] Learning physical intuition of block towers by example
     - [2017] **Shapestacks**: Learning vision-based physical intuition for generalised object stacking
 - embedding feature selection：得到一尽可能简单的模型 解释一物理现象(即accuracy达到一阈值)
-  - 85 89
-  - [2018] A regression approach for explaining manifold embedding coordinates：从unsupervised预训练embedding抽domain specific meaningful特征
-- [2018] Discovering physical concepts with neural networks：vae从实验结果抽特征，从特征得到physical concept
+  - [2016] **Discovering governing equations from data by sparse identification of nonlinear dynamical systems**
+  - [2017] **Exact recovery of chaotic systems from highly corrupted data**
+  - [2018] **A regression approach for explaining manifold embedding coordinates**：从unsupervised预训练embedding抽domain specific meaningful特征
+- [2018] **Discovering physical concepts with neural networks**：vae从实验结果抽特征，从特征得到physical concept
 - [2018 ICLR] **Detecting statistical interactions from neural network weights**：提出neural interaction detection

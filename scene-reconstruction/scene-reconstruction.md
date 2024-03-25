@@ -338,6 +338,31 @@ gaussian splatting + 物理公式模拟deform/移动
   - 对物体的作用力 为已知值输入模型
 - 使用学习得到的物理参数 对新的作用力config预测deform
 
+# Neuphysics: Editable neural geometry and physics from monocular videos
+
+
+# Nerfies: Deformable Neural Radiance Field
+2021
+
+使用自拍视频，生成动态nerf重建自拍人物。考虑人物表情变化和移动
+
+模型
+- 即nerf + deform mlp将后续时间的点warp回第一时间步
+- deform mlp预测位移+角度的6维向量
+  - ？练习：从6维向量得到旋转矩阵
+
+训练
+- elastic regularization
+  - 通过deform mlp得到一位置jacobian矩阵$\nabla_{x}$
+  - 对$\nabla_x$求SVD $U\sum V^T$，限制$\|\nabla_{x} - UVT\|_F^2 = 0$
+    - 即限制$\|\sum - I\|_F^2 = 0$。论文使用loss为 $\|\log(\sum)\|_F^s2$
+
+
+
+
+
+
+
 # Video-guided real-to-virtual parameter transfer for viscous fluids
 2019
 
@@ -363,6 +388,3 @@ Incremental Potential Contact (IPC)
 2016
 
 假设refraction 光路仅两条
-
-
-得到一人跑动视频，更改土地为沙地，生成视频符合修改

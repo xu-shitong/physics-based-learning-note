@@ -347,6 +347,33 @@ function operator
   - 计算一点周围旋转向量
 
 # Label-free supervision of neural networks with physics and domain knowledge
+2016
+
+当已知模型输出应满足一物理公式时，直接使用此公式做代价函数训练模型，期望训练的模型辅助发现直接从数据无法发现的额外物理现象
+
+1.预测视频中自由落体的物体每一帧高度
+- 模型为cnn
+- 代价函数为：将预测的每一时间步的预测高度$[f(x_1), ..., f(x_t)]$通过最小二乘法得到对应的二次函数，计算二次函数上t时刻的高度$y_t$ 和函数预测的高度$f(x_t)$之间的差 做loss项
+
+2.3.类似模型，针对水平移动的人位置预测/针对马里奥游戏图像中的物体causal关系预测
+
+# Discovering physical concepts with neural networks
+2018
+
+移除strong physics assumption，使得模型发现concept
+
+相关工作
+- 27：ml physics的survey
+- 28 29：训练模型 观察模型输出和gt数据的差距，得到physics concept
+
+模型
+- autoencoder模型，decoder除了encoding外还得到一query 向量代表提问信息
+  - ？如何定义query
+- 训练模型使得encoding仅包含足够的物理变量，使得仅使用smooth decoder就能生成期望输出
+  - ？
+
+# Filtered-CoPhy: Unsupervised Learning of Counterfactual Physics in Pixel Space
+2022
 
 
 # ThreeDWorld: A Platform for Interactive Multi-Modal Physical Simulation
@@ -368,3 +395,14 @@ function operator
 
 场景中有多个物理公式影响，如反射折射 碰撞，同时学习
 - 如 3d重建中，物体碰撞时也有阴影产生
+
+得到一人跑动视频，更改土地为沙地，生成视频符合修改
+
+得到一模型的视频，由于模型体积很小，材质却和实际物体相同，导致航模视频和实际物体视频不同
+- 使用视频编辑将航模视频转为实际物体视频
+- 使用物理公式发现图像中不符合大物体材料性质的部分，进行修改
+
+得到一场景/图像，提供音频，生成视频符合场景+音频
+
+
+
